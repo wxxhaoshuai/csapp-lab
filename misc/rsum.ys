@@ -1,0 +1,40 @@
+    .pos 0
+    irmovq stack,%rsp #设置栈指针
+    call main
+    halt
+  
+    # 内存区域，存放数据/链表之类
+    #链表
+      	.align 8 #地址和8字节对齐
+    ele1:
+      	.quad 0x00a
+    	.quad ele2
+    ele2:
+  	.quad 0x0b0
+  	.quad ele3
+    ele3:
+  	.quad 0xc00
+  	.quad 0
+    # END
+    
+    main:
+       	irmovq ele1,%rdi
+	call rsum_list
+	ret
+
+    rsum_list:
+	pushq %rbx  #%rbx为被调用者保存寄存器，后面有用到该寄存器，所以需要先压入栈中
+  	xorq %rax,%rax #用%rax保存val值，首先置零
+	andq %rdi,%rdi #看是否为零
+ 	je finish #为零的话就跳到finish，开始出栈 
+	mrmovq (%rdi), %rbx #val给到rbx
+        mrmovq 0x8(%rdi),%rdi #node = node->next
+        call rsum_list #递归
+	addq %rbx, %rax #结果保存在%rax中
+    finish:
+	popq %rbx
+	ret
+
+    .pos 0x200
+  stack:
+

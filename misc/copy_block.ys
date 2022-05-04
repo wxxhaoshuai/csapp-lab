@@ -1,0 +1,56 @@
+    .pos 0 #设置当前位置为0
+    irmovq stack,%rsp #设置栈指针
+    call main
+    halt 
+
+    # 内存区域，存放数据/链表之类
+    .align 8
+    #源块
+    src:
+    .quad 0x00a
+    .quad 0x0b0
+    .quad 0xc00
+    #目的块
+    dest:
+    .quad 0x111
+    .quad 0x222
+    .quad 0x333
+
+    #END
+    main: 
+        irmovq src,%rdi
+	irmovq dest,%rsi
+        irmovq $3,%rdx
+	call copy_block  # copy_block(src,dest,)
+   	ret
+    # long copy_block(long *src, long *dest, long len)
+    # src in %rdi
+    # dest in %rsi
+    # 3 in %rdx
+    #Y86-64指令集中不包含立即数和寄存器之间的运算指令，所以需要先通过irmovq将立即数保存到寄存器中，再用该寄存器进行计算
+    copy_block:
+        pushq %rbx
+	pushq %r9
+	pushq %r10
+	xorq %rax,%rax  #result = 0
+	irmovq $8,%r9
+	irmovq $1,%r10
+	jmp test
+    loop:
+	mrmovq (%rdi),%rbx #long val = *src;
+	addq %r9,%rdi      #src++
+	rmmovq %rbx,(%rsi) # #*dest = val;
+	addq %r9,%rsi      #dest++;
+	xorq %rbx,%rax     #update checksum
+	subq %r10,%rdx     #len--
+    test:
+	andq %rdx,%rdx  #len?=0
+        jne loop        #Stop when len = 0
+ 	popq %r10
+	popq %r9
+	popq %rbx
+	ret 
+
+
+    	.pos 0x200
+      stack:
